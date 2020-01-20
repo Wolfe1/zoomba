@@ -2,10 +2,12 @@ from AppiumLibrary import AppiumLibrary
 from appium import webdriver
 from robot.api.deco import keyword
 from robot.libraries.BuiltIn import BuiltIn
-import os
+import subprocess
 from selenium.webdriver.common.action_chains import ActionChains
+from time import sleep
 
 zoomba = BuiltIn()
+
 
 class DesktopLibrary(AppiumLibrary):
     """Zoomba Desktop Library
@@ -49,7 +51,7 @@ class DesktopLibrary(AppiumLibrary):
             'wait_for_and_mouse_over_and_click_element', 'mouse_over_text', 'wait_for_and_mouse_over_text',
             'mouse_over_and_click_text', 'wait_for_and_mouse_over_and_click_text', 'click_a_point',
             'context_click_a_point', 'mouse_over_and_context_click_element', 'mouse_over_and_context_click_text',
-            'mouse_over_by_offset', 'drag_and_drop', 'drag_and_drop_by_offset',
+            'mouse_over_by_offset', 'drag_and_drop', 'drag_and_drop_by_offset', 'send_keys', 'send_keys_to_element',
             # External Libraries
             'capture_page_screenshot', 'clear_text', 'click_button', 'click_element',
             'click_text', 'close_all_applications', 'close_application',
@@ -77,7 +79,7 @@ class DesktopLibrary(AppiumLibrary):
         return True
 
     @keyword("Open Application")
-    def open_application(self, remote_url, alias=None, window_name=None, **kwargs):
+    def open_application(self, remote_url, alias=None, window_name=None, splash_delay=0, **kwargs):
         """Opens a new application to given Appium server.
         If your application has a splash screen please supply the window name of the final window that will appear.
         For the capabilities of appium server and Windows,
@@ -86,10 +88,11 @@ class DesktopLibrary(AppiumLibrary):
         | remote_url          | Yes    | Appium server url                                                    |
         | alias               | No     | Alias                                                                |
         | window_name         | No     | Window name you wish to attach, usually after a splash screen        |
+        | splash_delay        | No     | Delay used when waiting for a splash screen to load, in seconds      |
 
         Examples:
         | Open Application | http://localhost:4723/wd/hub | alias=Myapp1         | platformName=Windows            | deviceName=Windows           | app=your.app          |
-        | Open Application | http://localhost:4723/wd/hub | alias=Myapp1         | platformName=Windows            | deviceName=Windows           | app=your.app          | window_name=MyApplication          |
+        | Open Application | http://localhost:4723/wd/hub | alias=Myapp1         | platformName=Windows            | deviceName=Windows           | app=your.app          | window_name=MyApplication          | splash_delay=5          |
         """
         desired_caps = kwargs
         if window_name:
@@ -97,14 +100,15 @@ class DesktopLibrary(AppiumLibrary):
             # If the app has a splash screen we need to supply the window_name of the final window. This code path will
             # start the application and then attach to the correct window via the window_name.
             # """
-            os.startfile(desired_caps['app'])
+            subprocess.Popen(desired_caps['app'])
+            if splash_delay > 0:
+                sleep(splash_delay)
             return self.switch_application_by_name(remote_url, alias=alias, window_name=window_name, **kwargs)
-        else:
-            # global application
-            application = webdriver.Remote(str(remote_url), desired_caps)
-            self._debug('Opened application with session id %s' % application.session_id)
+        # global application
+        application = webdriver.Remote(str(remote_url), desired_caps)
+        self._debug('Opened application with session id %s' % application.session_id)
 
-            return self._cache.register(application, alias)
+        return self._cache.register(application, alias)
 
     @keyword("Switch Application By Name")
     def switch_application_by_name(self, remote_url, window_name, alias=None, **kwargs):
@@ -495,6 +499,39 @@ class DesktopLibrary(AppiumLibrary):
         element = self._element_find(locator, True, True)
         actions = ActionChains(driver)
         actions.drag_and_drop_by_offset(element, x_offset, y_offset).perform()
+
+    @keyword("Send Keys")
+    def send_keys(self, *argv):
+        """Sends the desired keys in ``argv``.
+
+        A list of special key codes can be found
+        [https://seleniumhq.github.io/selenium/docs/api/py/webdriver/selenium.webdriver.common.keys.html|here]
+        """
+        driver = self._current_application()
+        actions = ActionChains(driver)
+        if argv:
+            for each in argv:
+                actions.send_keys(each)
+        else:
+            zoomba.fail('No key arguments specified.')
+        actions.perform()
+
+    @keyword("Send Keys To Element")
+    def send_keys_to_element(self, locator, *argv):
+        """Sends the desired keys in ``argv`` to ``locator``.
+
+        A list of special key codes can be found
+        [https://seleniumhq.github.io/selenium/docs/api/py/webdriver/selenium.webdriver.common.keys.html|here]
+        """
+        driver = self._current_application()
+        actions = ActionChains(driver)
+        element = self._element_find(locator, True, True)
+        if argv:
+            for each in argv:
+                actions.send_keys_to_element(element, each)
+        else:
+            zoomba.fail('No key arguments specified.')
+        actions.perform()
 
     # Private
 

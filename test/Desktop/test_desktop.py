@@ -1,8 +1,8 @@
 from Zoomba.DesktopLibrary import DesktopLibrary
 import unittest
 from appium import webdriver
-import os
-from unittest.mock import MagicMock
+import subprocess
+from unittest.mock import MagicMock, patch
 from webdriverremotemock import WebdriverRemoteMock
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -20,10 +20,10 @@ class TestInternal(unittest.TestCase):
 
     def test_open_application_splash_catch(self):
         dl = DesktopLibrary()
-        os.startfile = MagicMock(return_value=True)
+        subprocess.Popen = MagicMock()
         webdriver.Remote = WebdriverRemoteMock
         self.assertFalse(dl._cache.current)
-        dl.open_application('remote_url', window_name='test', app='testApp')
+        dl.open_application('remote_url', window_name='test', app='testApp', splash_delay=1)
         self.assertTrue(dl._cache.current)
 
     def test_maximize_window_successful(self):
@@ -331,3 +331,35 @@ class TestInternal(unittest.TestCase):
         actions = MagicMock()
         DesktopLibrary._move_to_element(actions, "some_element", 100, 100)
 
+    def test_send_keys(self):
+        mock_desk = MagicMock()
+        webdriver.Remote = WebdriverRemoteMock
+        ActionChains.send_keys = MagicMock()
+        DesktopLibrary.open_application(mock_desk, 'remote_url')
+        DesktopLibrary.send_keys(mock_desk, 'test', '\ue007')
+
+    @patch('robot.libraries.BuiltIn.BuiltIn.fail')
+    def test_send_keys_without_args(self, fail):
+        mock_desk = MagicMock()
+        webdriver.Remote = WebdriverRemoteMock
+        ActionChains.send_keys = MagicMock()
+        DesktopLibrary.open_application(mock_desk, 'remote_url')
+        DesktopLibrary.send_keys(mock_desk)
+        fail.assert_called_with('No key arguments specified.')
+
+    def test_send_keys_to_element(self):
+        mock_desk = MagicMock()
+        webdriver.Remote = WebdriverRemoteMock
+        ActionChains.move_to_element = MagicMock()
+        ActionChains.send_keys = MagicMock()
+        DesktopLibrary.open_application(mock_desk, 'remote_url')
+        DesktopLibrary.send_keys_to_element(mock_desk, 'some_element', 'test', '\ue007')
+
+    @patch('robot.libraries.BuiltIn.BuiltIn.fail')
+    def test_send_keys_to_element_without_args(self, fail):
+        mock_desk = MagicMock()
+        webdriver.Remote = WebdriverRemoteMock
+        ActionChains.send_keys = MagicMock()
+        DesktopLibrary.open_application(mock_desk, 'remote_url')
+        DesktopLibrary.send_keys_to_element(mock_desk, 'some_locator')
+        fail.assert_called_with('No key arguments specified.')

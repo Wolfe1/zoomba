@@ -1,55 +1,40 @@
 #!/usr/bin/env python3
 
-import sys
-from os.path import join, dirname
-from version import VERSION
+import version
 
-sys.path.append(join(dirname(__file__), 'src'))
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-VERSION = VERSION
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
-DESCRIPTION = """
-Zoomba
-""".strip()
-
-CLASSIFIERS  = """
-Development Status :: 5 - Production/Stable
-Operating System :: OS Independent
-Programming Language :: Python :: 3
-Topic :: Software Development :: Testing
-Framework :: Robot Framework :: Library
-""".strip().splitlines()
-
-setup(name         = 'robotframework-zoomba',
-      version      = VERSION,
-      description  = 'Robot Framework mini-framework.',
-      long_description = DESCRIPTION,
-      url          = 'https://github.com/Accruent/zoomba',
-      maintainer   = 'Alex Calandra, Michael Hintz, Keith Smoland, Matthew Giardina, Brandon Wolfe',
-      maintainer_email= 'robosquad@accruent.com',
-      license      = 'apache',
-      keywords     = 'Robot Framework robot-framework selenium requests appium soap',
-      platforms    = 'any',
-      install_requires= [
-          "robotframework>=3.1.1",
-          "robotframework-requests>=0.5.0",
-          "robotframework-seleniumlibrary>=3.3.1",
-          "robotframework-sudslibrary-aljcalandra",
-          "requests>=2.20.1",
-          "selenium>=3.141.0",
-          "python-dateutil",
-          "robotframework-appiumlibrary",
-      ],
+setup(name='robotframework-zoomba',
+      version=version.VERSION,
+      description='Robot Framework mini-framework.',
+      long_description='Zoomba',
+      url='https://github.com/Accruent/zoomba',
+      maintainer='Alex Calandra, Michael Hintz, Keith Smoland, Matthew Giardina, Brandon Wolfe',
+      maintainer_email='robosquad@accruent.com',
+      license='apache',
+      keywords='Robot Framework robot-framework selenium requests appium soap winappdriver appium robotframework'
+               'desktop windows zoomba python robotframework-library appium-windows appiumlibrary api-rest api '
+               'soap-api',
+      platforms='any',
+      install_requires=requirements,
       extras_require={
         'testing': [
           'Appium-Python-Client'
         ]
       },
-      classifiers  = CLASSIFIERS,
-      package_dir  = {'' : 'src'},
-      packages     = ['Zoomba']
+      classifiers="""
+        Development Status :: 5 - Production/Stable
+        Operating System :: OS Independent
+        Programming Language :: Python :: 3
+        Topic :: Software Development :: Testing
+        Framework :: Robot Framework :: Library
+        """.strip().splitlines(),
+      package_dir={'': 'src'},
+      packages=['Zoomba']
       )
